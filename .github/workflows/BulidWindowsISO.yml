@@ -1,0 +1,73 @@
+# .github/workflows/build-iso.yml
+name: Build Windows ISO
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 180
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        shell: pwsh
+        run: |
+          Get-Volume C | Select-Object SizeRemaining
+          Remove-Item -Recurse -Force -EA SilentlyContinue "C:\Android","C:\Program Files\Android","C:\hostedtoolcache\windows\Java_*","C:\hostedtoolcache\windows\Ruby","C:\hostedtoolcache\windows\go","C:\ProgramData\chocolatey\lib"
+          docker system prune -af --volumes 2>$null
+          Get-Volume C | Select-Object SizeRemaining
+
+      - name: Extract UUP package
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem "$env:GITHUB_WORKSPACE" -Filter "*.zip" | Select-Object -First 1
+          if (-not $zip) { throw "仓库根目录未找到 .zip 文件" }
+          Write-Host "解压: $($zip.Name)"
+          Expand-Archive -Path $zip.FullName -DestinationPath "$env:GITHUB_WORKSPACE\uup" -Force
+          Get-ChildItem "$env:GITHUB_WORKSPACE\uup"
+
+      - name: Download UUP files & converter
+        shell: cmd
+        timeout-minutes: 60
+        run: |
+          cd /d %GITHUB_WORKSPACE%\uup
+          call uup_download_windows.cmd
+
+      - name: Convert to ISO
+        shell: cmd
+        timeout-minutes: 90
+        run: |
+          cd /d %GITHUB_WORKSPACE%\uup
+          call convert-UUP.cmd .
+
+      - name: Collect ISO
+        shell: pwsh
+        run: |
+          $out = "$env:GITHUB_WORKSPACE\output"
+          New-Item -ItemType Directory -Force -Path $out
+          
+          Get-ChildItem "$env:GITHUB_WORKSPACE\uup" -Filter "*.iso" -Recurse | ForEach-Object {
+            Write-Host "找到: $($_.Name) ($([math]::Round($_.Length/1MB,2)) MB)"
+            Move-Item $_.FullName $out
+          }
+          
+          if ((Get-ChildItem $out).Count -eq 0) { throw "未生成 ISO" }
+          
+          # SHA256
+          Get-ChildItem $out -Filter "*.iso" | ForEach-Object {
+            $h = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+            "$h  $($_.Name)" | Out-File "$out\$($_.BaseName).sha256.txt"
+          }
+          
+          Get-ChildItem $out
+
+      - name: Upload to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-iso
+          path: output/*
+          retention-days: 7
