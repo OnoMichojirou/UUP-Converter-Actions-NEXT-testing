@@ -64,4 +64,5 @@ jobs:
         with:
           name: windows-iso
           path: output/*
+          archive: true
           retention-days: 1
