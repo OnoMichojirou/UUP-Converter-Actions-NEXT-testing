@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 180
+    timeout-minutes: 1800
     
     steps:
       - name: Checkout
@@ -32,14 +32,14 @@ jobs:
 
       - name: Download UUP files & converter
         shell: cmd
-        timeout-minutes: 60
+        timeout-minutes: 600
         run: |
           cd /d %GITHUB_WORKSPACE%\uup
           call uup_download_windows.cmd
 
       - name: Convert to ISO
         shell: cmd
-        timeout-minutes: 90
+        timeout-minutes: 900
         run: |
           cd /d %GITHUB_WORKSPACE%\uup
           call convert-UUP.cmd .
