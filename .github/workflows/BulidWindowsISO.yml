@@ -30,7 +30,7 @@ jobs:
           Expand-Archive -Path $zip.FullName -DestinationPath "$env:GITHUB_WORKSPACE\uup" -Force
           Get-ChildItem "$env:GITHUB_WORKSPACE\uup"
 
-      - name: Download UUP files & Conver to ISo
+      - name: Download UUP files & Conver to ISO
         shell: cmd
         timeout-minutes: 600
         run: |
