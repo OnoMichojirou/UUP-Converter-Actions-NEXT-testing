@@ -27,8 +27,8 @@ jobs:
           $zip = Get-ChildItem "$env:GITHUB_WORKSPACE" -Filter "*.zip" | Select-Object -First 1
           if (-not $zip) { throw "仓库根目录未找到 .zip 文件" }
           Write-Host "解压: $($zip.Name)"
-          Expand-Archive -Path $zip.FullName -DestinationPath "$env:GITHUB_WORKSPACE\" -Force
-          Get-ChildItem "$env:GITHUB_WORKSPACE\"
+          Expand-Archive -Path $zip.FullName -DestinationPath "$env:GITHUB_WORKSPACE\uup" -Force
+          Get-ChildItem "$env:GITHUB_WORKSPACE\uup"
 
       - name: Download UUP files & Conver to ISO
         shell: cmd
