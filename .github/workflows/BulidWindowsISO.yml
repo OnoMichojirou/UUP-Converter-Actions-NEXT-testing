@@ -60,8 +60,9 @@ jobs:
           Get-ChildItem $out
 
       - name: Upload to Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-iso
           path: output/*
-          retention-days: 7
+          archive: false
+          retention-days: 1
